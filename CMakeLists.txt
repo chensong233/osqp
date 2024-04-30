@@ -12,6 +12,13 @@ if(NOT OSQP_VERSION STREQUAL "0.0.0")
     )
 endif()
 
+set(USED_AS_SUBMODULE TRUE)
+if(USED_AS_SUBMODULE)
+  set(osqp_library_name osqplocal)
+else(USED_AS_SUBMODULE)
+  set(osqp_library_name osqp)
+endif(USED_AS_SUBMODULE)
+
 # Export compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -313,18 +320,18 @@ endif (MATLAB)
 if (NOT PYTHON AND NOT MATLAB AND NOT R_LANG AND NOT EMBEDDED)
     # Create osqp shared library
     # NB: Add all the linear system solvers here
-    add_library (osqp SHARED ${osqp_src} ${osqp_headers} ${linsys_solvers})
+    add_library (osqp_library_name SHARED ${osqp_src} ${osqp_headers} ${linsys_solvers})
 
     # Include directories for linear system solvers
-    target_include_directories(osqp PRIVATE ${linsys_solvers_includes})
+    target_include_directories(osqp_library_name PRIVATE ${linsys_solvers_includes})
 
     # Declare include directories for the cmake exported target
-    target_include_directories(osqp
+    target_include_directories(osqp_library_name
                                PUBLIC "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
                                       "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}/osqp>")
 
     # Install osqp shared library
-    install(TARGETS osqp
+    install(TARGETS osqp_library_name
             EXPORT  ${PROJECT_NAME}
             LIBRARY       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
             ARCHIVE       DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -334,6 +341,9 @@ if (NOT PYTHON AND NOT MATLAB AND NOT R_LANG AND NOT EMBEDDED)
     add_executable (osqp_demo ${PROJECT_SOURCE_DIR}/examples/osqp_demo.c)
     target_link_libraries (osqp_demo osqpstatic)
 
+    if(USED_AS_SUBMODULE)
+        add_library(osqp::osqp_library_name ALIAS osqp_library_name)
+    endif(USED_AS_SUBMODULE)
 endif (NOT PYTHON AND NOT MATLAB AND NOT R_LANG AND NOT EMBEDDED)
 
 # Create CMake packages for the build directory
